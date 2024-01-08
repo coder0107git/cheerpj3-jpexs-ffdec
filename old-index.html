@@ -1,0 +1,51 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8" />
+    <title>CheerpJ test</title>
+    <script src="https://cjrtnc.leaningtech.com/3.0rc2/cj3loader.js"></script>
+    <!--<style>
+        .as-console-wrapper {
+            z-index: 500000 !important;
+        }
+    </style>-->
+    <style>
+        html, body {
+            margin: 0;
+        }
+    
+        #container {
+            width: 100vw;
+            height: 100svh;
+        }
+    </style>
+</head>
+<body>
+    <div id="container"></div>
+
+    <script type="module">
+        import "https://cdn.jsdelivr.net/npm/eruda@3/eruda.js";
+        await eruda.init();
+
+
+        console.log("Initalizing...");
+
+        await cheerpjInit({
+            javaProperties: [
+                "java.net.preferIPv4Stack=true",
+            ],
+            natives: {
+                async JVM_ConstantPoolGetLongAt(lib, ...params) {
+                    console.info
+                },
+            },
+        });
+        cheerpjCreateDisplay(-1, -1, document.querySelector("#container"));
+        console.log("Created display...");
+
+        await cheerpjRunJar("/app/ffdec.jar");
+
+        console.log("Running...")
+    </script>
+</body>
+</html>
