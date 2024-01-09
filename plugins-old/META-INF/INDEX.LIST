@@ -1,0 +1,6 @@
+JarIndex-Version: 1.0
+
+plugins.jar
+AS3JumpOverflowFix.class
+BitmapFillChanger.class
+
