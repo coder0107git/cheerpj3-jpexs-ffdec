@@ -10,5 +10,8 @@
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
     "dev": "npm exec serve ."
+  },
+  "devDependencies": {
+    "serve": "^14.2.1"
   }
 }
