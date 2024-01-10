@@ -30,6 +30,26 @@
         await eruda.init();
 
 
+        class Inotify {
+            static descriptors = [
+                "/dev/stdin", // 0
+                "/dev/stdout", // 1
+                "/dev/stderr", // 2
+            ];
+
+        }
+
+        const FileUtils = {
+            // Returns promise resolving to a blob 
+            readFile: path => 
+                cjFileBlob(path),
+            addFile: (path, content) => cheerpOSAddStringFile(
+                path, 
+                content
+            ),
+        };
+
+
         console.log("Initalizing...");
 
         await cheerpjInit({
@@ -37,12 +57,49 @@
                 "java.net.preferIPv4Stack=true",
                 "java.vm.name=cheerpj",
             ],
-            /*natives: {
-                async JVM_ConstantPoolGetLongAt(lib, ...params) {
-                    console.info(lib, ...params);
-                    return Number.MAX_SAFE_INTEGER;
+            natives: {
+                async Java_sun_nio_fs_LinuxWatchService_inotifyInit() {
+                    // Append null on the discriptors and return the new 
+                    let res;
+                    try {
+                        res = Inotify.descriptors.push(null) - 1;
+                        //console.info("alive");
+                        return res;
+                    } catch(e) {
+                        console.error(e);
+                    }
                 },
-            },*/
+                async Java_sun_nio_fs_LinuxWatchService_configureBlocking(_, fd, blocking) {
+                    console.info(
+                        "Java_sun_nio_fs_LinuxWatchService_configureBlocking", 
+                        fd, 
+                        blocking,
+                    );
+                    return;
+                },
+                async Java_sun_nio_fs_LinuxWatchService_socketpair(_, sv) {
+                    console.info(
+                        "Java_sun_nio_fs_LinuxWatchService_socketpair",
+                        sv,
+                    );
+                    return;
+                },
+                async Java_sun_nio_fs_LinuxWatchService_eventSize() {
+                    return Int32Array.BYTES_PER_ELEMENT 
+                        + (Uint32Array.BYTES_PER_ELEMENT * 2) 
+                        + Uint16Array.BYTES_PER_ELEMENT;
+                },
+                async Java_sun_nio_fs_LinuxWatchService_eventOffsets() {
+                    // TODO: This function causes more issues than it solves so 
+                    // reimplementing it would be a good idea.
+                    return new Int32Array([
+                        Int32Array.BYTES_PER_ELEMENT,
+                        Int32Array.BYTES_PER_ELEMENT + Uint32Array.BYTES_PER_ELEMENT,
+                        Int32Array.BYTES_PER_ELEMENT + (Uint32Array.BYTES_PER_ELEMENT * 2),
+                        Int32Array.BYTES_PER_ELEMENT + (Uint32Array.BYTES_PER_ELEMENT * 2) + Uint16Array.BYTES_PER_ELEMENT,
+                    ]);
+                }
+            },
         });
         cheerpjCreateDisplay(-1, -1, document.querySelector("#container"));
         console.log("Created display...");
