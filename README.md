@@ -5,6 +5,8 @@
 
 ## Running
 
+**Note:** The website has a in page version of developer tools ([Eruda](https://www.npmjs.com/package/eruda)) to easily inspect the console and network requests. It doesn't log network requests for CheerpJ resources but it does log the FFDEC network requests.
+
 ### Website
 On Github Pages [here](https://cheerpj3-jpexs-ffdec.coder0107git.v6.rocks/).
 
