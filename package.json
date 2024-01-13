@@ -9,7 +9,7 @@
   },
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
-    "dev": "npm exec serve ."
+    "dev": "npm exec -- serve --no-clipboard --cors --no-clipboard --symlinks -p 3001 ."
   },
   "devDependencies": {
     "serve": "^14.2.1"

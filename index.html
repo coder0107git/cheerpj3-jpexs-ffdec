@@ -5,7 +5,7 @@
     <title>CheerpJ test</title>
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <!--<script src="https://cjrtnc.leaningtech.com/3.0rc2/cj3loader.js"></script>-->
-    <script src="https://cjrtnc.leaningtech.com/3_20240104_337/cj3loader.js"></script>
+    <script src="https://cjrtnc.leaningtech.com/3_20240110_341/cj3loader.js"></script>
     <!--<style>
         .as-console-wrapper {
             z-index: 500000 !important;
@@ -23,14 +23,34 @@
     </style>
 </head>
 <body>
-    <div id="container"></div>
+    <div id="container">
+        <label>
+            SWF File Upload:
+            <input type="file" accept=".swf" oninput="window.handleFiles(this)">
+        </label>
+    </div>
 
     <script type="module">
-        import "https://cdn.jsdelivr.net/npm/eruda@3/eruda.js";
-        await eruda.init();
+        const supportsClipboardAPI = window.isSecureContext 
+            && await navigator
+                .permissions
+                .query({ name: "clipboard-read" })
+                .then(() => true) // Browser does support
+                .catch(() => false); // No browser support
+        const urlParams = new URLSearchParams(window.location.search);
+
+        async function initConsole() {
+            await import("https://cdn.jsdelivr.net/npm/eruda@3/eruda.js");
+            await eruda.init();
+        }
+        void(
+            window.location.hash == "#console"
+                ? await initConsole()
+                : window.addEventListener("hashchange", initConsole)
+        );
 
 
-        class Inotify {
+        /*class Inotify {
             static descriptors = [
                 "/dev/stdin", // 0
                 "/dev/stdout", // 1
@@ -47,19 +67,104 @@
                 path, 
                 content
             ),
-        };
+        };*/
 
 
-        console.log("Initalizing...");
-
+        console.groupCollapsed("Initializing...");
         await cheerpjInit({
             javaProperties: [
                 "java.net.preferIPv4Stack=true",
-                "java.vm.name=cheerpj",
+                //"java.vm.name=cheerpj",
             ],
-            natives: {
+            /*preloadResources: { 
+                "/lt/8/jre/lib/rt.jar": [0, 131072, 1179648, 1572864, 3670016, 3801088, 3932160, 4063232, 4194304, 4456448, 6029312, 6160384, 6291456, 6422528, 6815744, 7077888, 9699328, 11010048, 11272192, 12582912, 12976128, 13107200, 13238272, 14024704, 14417920, 15073280, 15204352, 15335424, 15466496, 15597568, 15990784, 16384000, 16646144, 16908288, 17039360, 17563648, 17694720, 17825792, 18087936, 18481152, 18612224, 18874368, 19529728, 19660800, 20054016, 20185088, 20316160, 26869760], 
+                "/lt/8/jre/lib/cheerpj-awt.jar": [0, 131072], 
+                "/lt/etc/passwd": [0, 131072],
+                "/lt/etc/localtime": [], 
+                "/lt/8/ext/meta-index": [0, 131072], 
+                "/lt/8/ext": [], 
+                "/lt/8/ext/index.list": [], 
+                "/lt/8/ext/sunjce_provider.jar": [], 
+                "/lt/8/jre/lib/jsse.jar": [0, 131072, 786432, 917504], 
+                "/lt/8/jre/lib/jce.jar": [0, 131072], 
+                "/lt/8/jre/lib/charsets.jar": [0, 1835008], 
+                "/lt/8/jre/lib/resources.jar": [0, 131072, 262144, 393216, 786432, 1179648], 
+                "/lt/8/jre/lib/javaws.jar": [0, 131072, 1441792, 1703936], 
+                "/lt/8/lib/logging.properties": [0, 131072], 
+                "/lt/etc/timezone": [], 
+                "/lt/8/lib/tzdb.dat": [0, 131072],
+                "/lt/8/lib/ext/localedata.jar": [], 
+                "/lt/8/jre/lib/meta-index": [0, 131072], 
+                "/lt/8/jre/lib": [], 
+                "/lt/8/lib/currency.data": [0, 131072],
+                "/lt/8/lib/currency.properties": [],
+                "/lt/8/lib/accessibility.properties": [], 
+                "/lt/8/lib/swing.properties": [], 
+                "/lt/8/lib/fonts/LucidaSansRegular.ttf": [], 
+                "/lt/8/lib/security/java.security": [0, 131072],
+                "/lt/8/lib/fonts/badfonts.txt": [], 
+                "/lt/8/lib/fonts": [], 
+                "/lt/etc/hosts": [], 
+                "/lt/etc/resolv.conf": [0, 131072], 
+                "/lt/fc/fonts/fonts.conf": [0, 131072], 
+                "/lt/fc/ttf": [], 
+                "/lt/fc/cache/e21edda6a7db77f35ca341e0c3cb2a22-le32d8.cache-7": [0, 131072], 
+                "/lt/8/lib/fonts/fallback": [], 
+                "/lt/fc/ttf/NotoSansCJK-Regular.ttc": [0, 262144, 2228224, 2490368, 3538944, 3670016, 4587520, 4849664, 6029312, 6160384, 6946816, 7077888, 8912896, 9043968, 9437184, 9568256, 14155776, 14286848, 14417920, 15466496, 16515072, 16646144, 17432576, 17825792, 18874368, 19398656], 
+                "/lt/fc/ttf/NotoSansCJK-Bold.ttc": [0, 262144, 14811136, 14942208, 15073280, 16121856, 17039360, 17170432, 17563648, 17956864, 19398656, 19529728, 19660800, 19791872], 
+                "/lt/8/lib/cmm/sRGB.pf": [0, 131072], 
+                "/lt/8/lib/cmm": [], 
+                "/lt/8/lib/cmm/GRAY.pf": [0, 131072], 
+                "/lt/fc/ttf/NotoSansSymbols2-Regular.ttf": [0, 131072, 524288, 655360], 
+                "/lt/fc/ttf/NotoSansArabic-Regular.ttf": [0, 262144], 
+                "/lt/fc/ttf/NotoSerif-Italic.ttf": [0, 131072, 393216, 524288], 
+                "/lt/fc/ttf/NotoSerifDevanagari-Bold.ttf": [0, 262144], 
+                "/lt/fc/ttf/NotoSerifHebrew-Bold.ttf": [0, 131072], 
+                "/lt/fc/ttf/NotoSerif-BoldItalic.ttf": [0, 131072, 524288, 655360], 
+                "/lt/fc/ttf/NotoSansDevanagari-Regular.ttf": [0, 262144], 
+                "/lt/fc/ttf/NotoKufiArabic-Regular.ttf": [0, 262144],
+                "/lt/fc/ttf/NotoSerifHebrew-Regular.ttf": [0, 131072], 
+                "/lt/fc/ttf/NotoSansArabic-Bold.ttf": [0, 262144], 
+                "/lt/fc/ttf/NotoSerif-Regular.ttf": [0, 131072, 393216, 524288], 
+                "/lt/fc/ttf/NotoSansDevanagari-Bold.ttf": [0, 262144], 
+                "/lt/fc/ttf/NotoSans-BoldItalic.ttf": [0, 131072, 393216, 524288], 
+                "/lt/fc/ttf/NotoSansMath-Regular.ttf": [0, 131072, 524288, 655360], 
+                "/lt/fc/ttf/NotoSansSymbols-Regular.ttf": [0, 262144], 
+                "/lt/fc/ttf/NotoColorEmoji.ttf": [0, 131072], 
+                "/lt/fc/ttf/NotoSerifCJK-Regular.ttc": [0, 131072, 24510464, 24641536, 25952256, 26083328], 
+                "/lt/fc/ttf/NotoKufiArabic-Bold.ttf": [0, 262144], 
+                "/lt/fc/ttf/NotoSerifThai-Bold.ttf": [0, 131072], 
+                "/lt/fc/ttf/NotoSansThai-Bold.ttf": [0, 131072], 
+                "/lt/fc/ttf/NotoSans-Italic.ttf": [0, 131072, 393216, 524288], 
+                "/lt/fc/ttf/NotoSansMono-Regular.ttf": [0, 131072, 393216, 524288], 
+                "/lt/fc/ttf/NotoSans-Regular.ttf": [0, 131072, 262144, 524288], 
+                "/lt/fc/ttf/NotoMusic-Regular.ttf": [0, 131072], 
+                "/lt/fc/ttf/NotoSansMono-Bold.ttf": [0, 131072, 393216, 524288], 
+                "/lt/fc/ttf/NotoSerif-Bold.ttf": [0, 131072, 393216, 524288], 
+                "/lt/fc/ttf/NotoSansThai-Regular.ttf": [0, 131072], 
+                "/lt/fc/ttf/NotoSerifCJK-Bold.ttc": [0, 131072, 25559040, 25690112, 27000832, 27131904], 
+                "/lt/fc/ttf/NotoSerifDevanagari-Regular.ttf": [0, 262144], 
+                "/lt/fc/ttf/NotoSansHebrew-Regular.ttf": [0, 131072], 
+                "/lt/fc/ttf/NotoSansSymbols-Bold.ttf": [0, 262144], 
+                "/lt/fc/ttf/NotoSansHebrew-Bold.ttf": [0, 131072], 
+                "/lt/fc/ttf/NotoSerifThai-Regular.ttf": [0, 131072], 
+                "/lt/fc/ttf/NotoSans-Bold.ttf": [0, 131072, 393216, 524288], 
+                "/lt/8/lib/jaxp.properties": [], 
+                "/lt/8/lib/flavormap.properties": [0, 131072],
+            },*/
+            preloadProgress: (preloadDone, preloadTotal) => {
+                console.info(`Loaded ${((preloadDone / preloadTotal) * 100).toFixed(5)}% (${preloadDone}/${preloadTotal})`);
+            },
+            clipboardMode: supportsClipboardAPI === true ? "permission" : "system",
+            ...(!urlParams.get("base") 
+                ? {}  
+                : { overrideDocumentBase: urlParams.get("base") }
+            ),
+            beepCallback: () => alert("Beep!"),
+            enableInputMethods: true,
+            /*natives: {
                 async Java_sun_nio_fs_LinuxWatchService_inotifyInit() {
-                    // Append null on the discriptors and return the new 
+                    // Append null on the descriptors and return the new 
                     let res;
                     try {
                         res = Inotify.descriptors.push(null) - 1;
@@ -99,14 +204,32 @@
                         Int32Array.BYTES_PER_ELEMENT + (Uint32Array.BYTES_PER_ELEMENT * 2) + Uint16Array.BYTES_PER_ELEMENT,
                     ]);
                 }
-            },
+            },*/
         });
-        cheerpjCreateDisplay(-1, -1, document.querySelector("#container"));
-        console.log("Created display...");
+        console.groupEnd();
 
-        await cheerpjRunJar("/app/ffdec.jar");
+        window.handleFiles = async element => {
+            const file = element.files[0];
+            const buff = await file.arrayBuffer();
+            const { name } = file;
 
-        console.log("Running...")
+            cheerpOSAddStringFile(`/str/${name}`, new Uint8Array(buff));
+            runApp(name);
+        };
+        
+        async function runApp(fileName) {
+            const container = document.querySelector("#container");
+            container.replaceChildren(); // Delete contents
+            cheerpjCreateDisplay(-1, -1, container);
+            console.log("Created display...");
+            
+
+            console.group("Running...");
+            const exitCode = await cheerpjRunJar("/app/ffdec.jar", `/str/${fileName}`);
+            
+            console.log(`Exited with code: ${exitCode}`);
+            console.groupEnd();
+        };
     </script>
 </body>
 </html>
