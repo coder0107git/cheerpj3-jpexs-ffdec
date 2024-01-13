@@ -1,0 +1,23 @@
+{
+    // Words spell checker extension should ignore
+    "cSpell.words": [
+        "badfonts",
+        "charsets",
+        "Cheerp",
+        "cheerpj",
+        "Decompiler",
+        "eruda",
+        "ffdec",
+        "flavormap",
+        "Inotify",
+        "javaws",
+        "jaxp",
+        "JPEXS",
+        "jsse",
+        "localedata",
+        "resolv",
+        "socketpair",
+        "sunjce",
+        "tzdb"
+    ]
+}
