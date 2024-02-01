@@ -4,6 +4,7 @@
     <meta charset="utf-8" />
     <title>CheerpJ test</title>
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="color-scheme" content="dark light">
     <script src="https://cjrtnc.leaningtech.com/3_20240110_341/cj3loader.js"></script>
     <!--<style>
         .as-console-wrapper {
@@ -19,23 +20,75 @@
             width: 100vw;
             height: 100svh;
         }
+
+        img.cheerpj-logo-direct-embed {
+            position: absolute;
+            top: 0;
+            right: 0;
+            height: 100px;
+            z-index: 99999999;
+
+            box-sizing: border-box;
+            margin: 0;
+
+            border-style: dashed;
+            border-width: 5px;
+            border-color: blue;
+        }
     </style>
 </head>
 <body>
+    <img 
+        src="https://cjrtnc.leaningtech.com/3_20240110_341/cheerpj.svg" 
+        alt="Spinning circle image"
+        class="cheerpj-logo-direct-embed"/>
     <div id="container">
         <label>
             SWF File Upload:
             <input type="file" accept=".swf" oninput="window.handleFiles(this)">
         </label>
+        <br>
+        OR:
+        <button 
+            onclick="{
+                const res = window.confirm('Are you sure? This file has a valid U.S. copyright.\n\n' +
+                'By continuing you acknowledge that the example file is protected under U.S. ' +
+                'copyright law and accept all responsibility for your use the file. ' +
+                '(i.e. your use of the file must be in accordance with U.S. copyright law)');
+                
+                if(res) window.handleFiles(null, false);
+            }">
+            Use example SWF
+        </button>
+        <br>
+        OR:
+        <button onclick="window.runApp()">
+            Continue without a file (not recommended)
+        </button>
     </div>
 
-    <script type="module">
+    <script type="module">        
+        window.onerror = (msg, src, line, col, err) => {
+            console.warn(
+                `message: ${msg}`,
+                `source: ${src}`,
+                `lineno: ${line}`,
+                `colno: ${col}`,
+                `error: ${err}`,
+            );
+        };
+
         const supportsClipboardAPI = 
             window.isSecureContext 
             && await navigator
                 .permissions
                 .query({ name: "clipboard-read" })
-                .then(() => true) // Browser does support
+                .then(({ state }) => 
+                    // Browser supports and can access or ask for access    
+                    state == "granted" 
+                    || state == "prompt"
+                        ? true 
+                        : false) 
                 .catch(() => false); // No browser support
         const urlParams = new URLSearchParams(window.location.search);
 
@@ -50,32 +103,11 @@
         }
         await initConsole();
 
-
-        /*class Inotify {
-            static descriptors = [
-                "/dev/stdin", // 0
-                "/dev/stdout", // 1
-                "/dev/stderr", // 2
-            ];
-
-        }
-
-        const FileUtils = {
-            // Returns promise resolving to a blob 
-            readFile: path => 
-                cjFileBlob(path),
-            addFile: (path, content) => cheerpOSAddStringFile(
-                path, 
-                content
-            ),
-        };*/
-
-
+        
         console.groupCollapsed("Initializing...");
         await cheerpjInit({
             javaProperties: [
                 "java.net.preferIPv4Stack=true",
-                //"java.vm.name=cheerpj",
             ],
             /*preloadResources: {},*/
             preloadProgress: (preloadDone, preloadTotal) => {
@@ -92,28 +124,70 @@
         });
         console.groupEnd();
 
-        window.handleFiles = async element => {
-            const file = element.files[0];
+        window.handleFiles = async (element, uploaded = true) => {
+            const file = uploaded 
+                ? element.files[0] 
+                : await fetch(
+                    // CORS Proxy
+                    "https://api.codetabs.com/v1/proxy?quest=" + encodeURIComponent(
+                        "http://web.archive.org/web/20200730061016oe_/https://media.scouting.org/boyslife/onlinegames/tankz2/tankz2.swf"
+                    )
+                ).then(res => res.blob())
+                .then(blob => new Blob(
+                    [blob],
+                    { type: "application/x-shockwave-flash" },
+                ));
             const buff = await file.arrayBuffer();
-            const { name } = file;
+            const name = uploaded ? file.name : "tankz2.swf";
 
             cheerpOSAddStringFile(`/str/${name}`, new Uint8Array(buff));
             runApp(name);
         };
         
-        async function runApp(fileName) {
+        async function runApp(fileName = null) {
             const container = document.querySelector("#container");
             container.replaceChildren(); // Delete contents
             cheerpjCreateDisplay(-1, -1, container);
             console.log("Created display...");
             
+            let config = Object.assign(Object.create(null), {
+                lastSaveDir: "/files",
+                lastOpenDir: "/str",
+                _showDebugMenu: true,
+                airLibLocation: "/app/flashlib/airglobal.swc",
+                playerLibLocation: "/app/flashlib/playerglobal32_0.swc",
+                "check.updates.enabled": false,
+                pluginPath: "/app/plugins/",
+                useDetailedLogging: true,
+                saveSessionOnExit: true,
+                "gui.window.maximized.horizontal": true,
+                "gui.window.maximized.vertical": true,
+                "gui.window.height": document.body.clientHeight,
+                "gui.window.width": document.body.clientWidth,
+            });
+            // Format config object as command line options string
+            config = Object.entries(config).reduce(
+                (accumulator, entry) => 
+                    `${accumulator === null 
+                        ? "" 
+                        : `${accumulator},` 
+                    }${entry[0]}=${entry[1]}`,
+                null,
+            );
 
             console.group("Running...");
-            const exitCode = await cheerpjRunJar("/app/ffdec.jar", `/str/${fileName}`);
+            const exitCode = await cheerpjRunJar(
+                "/app/ffdec.jar", 
+                "-config",
+                config,
+                ...(fileName ? [`/str/${fileName}`] : []), // Support running without file
+            );
             
             console.log(`Exited with code: ${exitCode}`);
             console.groupEnd();
-        };
+        }
+
+        window.runApp = runApp;
     </script>
 </body>
 </html>

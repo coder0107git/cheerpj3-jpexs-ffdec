@@ -1,13 +1,16 @@
 {
     // Words spell checker extension should ignore
     "cSpell.words": [
+        "airglobal",
         "badfonts",
         "charsets",
         "Cheerp",
         "cheerpj",
+        "chobitsu",
         "Decompiler",
         "eruda",
         "ffdec",
+        "flashlib",
         "flavormap",
         "Inotify",
         "javaws",
@@ -15,9 +18,11 @@
         "JPEXS",
         "jsse",
         "localedata",
+        "playerglobal",
         "resolv",
         "socketpair",
         "sunjce",
+        "tankz",
         "tzdb"
     ]
 }
