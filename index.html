@@ -185,6 +185,8 @@
             
             console.log(`Exited with code: ${exitCode}`);
             console.groupEnd();
+            
+            alert(`App exited with code ${exitCode}. You will need to reload the page to open it again.`)
         }
 
         window.runApp = runApp;
