@@ -9,9 +9,12 @@ const cheerpjURL = await getCheerpJLink();
 <html lang="en">
 <head>
     <meta charset="utf-8" />
-    <title>CheerpJ test</title>
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta name="color-scheme" content="dark light">
+    <meta name="generator" content={Astro.generator} />
+    <title>CheerpJ test</title>
+
     <!-- <script is:inline src="https://cjrtnc.leaningtech.com/3_20241017_546/cj3loader.js"></script> -->
     <!-- <script src="../lib/cheerpj.ts"></script> -->
     <!--<style>
@@ -63,15 +66,7 @@ const cheerpjURL = await getCheerpJLink();
         </label>
         <br>
         OR:
-        <button 
-            onclick="{
-                /*const res = window.confirm('Are you sure? This file has a valid U.S. copyright.\n\n' +
-                'By continuing you acknowledge that the example file is protected under U.S. ' +
-                'copyright law and accept all responsibility for your use the file. ' +
-                '(i.e. your use of the file must be in accordance with U.S. copyright law)');*/
-                
-                if(/* res */ true) { window.handleFiles(null, false); }
-            }">
+        <button onclick="window.handleFiles(null, false)">
             Use example SWF
         </button>
         <br>
@@ -94,16 +89,18 @@ const cheerpjURL = await getCheerpJLink();
 
         const supportsClipboardAPI = 
             window.isSecureContext 
-            && await navigator
-                .permissions
+            && await navigator.permissions
                 .query({ name: "clipboard-read" as PermissionName })
                 .then(({ state }) => 
                     // Browser supports and can access or ask for access    
                     state == "granted" 
                     || state == "prompt"
                         ? true 
-                        : false) 
-                .catch(() => false); // No browser support
+                        : false
+                )
+                // No browser support
+                .catch(() => false); 
+
         const urlParams = new URLSearchParams(window.location.search);
 
         async function initConsole() {
@@ -153,10 +150,10 @@ const cheerpjURL = await getCheerpJLink();
                         [blob],
                         { type: "application/x-shockwave-flash" },
                     ));
-            const buff = await file.arrayBuffer();
+            const buffer = await file.arrayBuffer();
             const name = uploaded ? (file as File).name : "tankz2.swf";
 
-            cheerpOSAddStringFile(`/str/${name}`, new Uint8Array(buff));
+            cheerpOSAddStringFile(`/str/${name}`, new Uint8Array(buffer));
             runApp(name);
         }
 
