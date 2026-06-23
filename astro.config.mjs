@@ -1,11 +1,11 @@
 // @ts-check
 import { defineConfig } from "astro/config";
 import Chii from "./src/chii-integration/index.js";
-import VitePWA from "@vite-pwa/astro";
+import AstroPWA from "@vite-pwa/astro";
 
 
-console.log("ENV", process.env.NODE_ENV);
-const isDevelopmentEnv = process.env.NODE_ENV === "development";
+// console.log("ENV", process.env.NODE_ENV);
+// const isDevelopmentEnv = process.env.NODE_ENV === "development";
 /**
  * @template [T=any]
  * 
@@ -13,7 +13,7 @@ const isDevelopmentEnv = process.env.NODE_ENV === "development";
  * @param {T} param 
  * @returns {T}
  */
-const echo = (tag, param) => {
+function echo(tag, param) {
     console.log(`[${tag}]`, param);
     return param;
 }
@@ -24,38 +24,36 @@ export default defineConfig({
         enabled: false,
     },
     vite: {
-        server: {
-            allowedHosts: [".gitpod.io"],
+        build: {
+            sourcemap: true,
         },
-            // Allow all hostnames only during dev
-            // isDevelopmentEnv
-            //     ? {
-            //         allowedHosts: [".gitpod.io"],
-            //         // proxy: {
-            //         //     '^/chii/target/.*': {
-            //         //         target: 'ws://127.0.0.1:8080/',
-            //         //         ws: true,
-
-            //         //         changeOrigin: true,
-            //         //         rewriteWsOrigin: true,
-            //         //         rewrite: (path) => path.replace(/^\/chii/, ''),
-            //         //     },
-            //         //     '/chii/': {
-            //         //         target: 'http://127.0.0.1:8080/',
-            //         //         changeOrigin: true,
-            //         //         // rewrite: (path) => path.replace(/^\/chii/, ''),
-            //         //     },
-            //         //     // '^/chii/.*': {
-            //         //     //     target: 'http://127.0.0.1:8080/',
-            //         //     //     changeOrigin: true,
-            //         //     //     rewrite: (path) => path.replace(/^\/chii/, ''),
-            //         //     // },
-            //         // },
-            //     }
-            //     : {},
-        // preview: {
-        //     allowedHosts: [".gitpod.io", "4321-coder0107gi-cheerpj3jpe-rtfmgrkxz5c.ws-us121.gitpod.io"],
-        // },
+        server: {
+            strictPort: true,
+        },
+        // server: isDevelopmentEnv
+        //     ? {
+        //         // proxy: {
+        //         //     '^/chii/target/.*': {
+        //         //         target: 'ws://127.0.0.1:8080/',
+        //         //         ws: true,
+        //         // 
+        //         //         changeOrigin: true,
+        //         //         rewriteWsOrigin: true,
+        //         //         rewrite: (path) => path.replace(/^\/chii/, ''),
+        //         //     },
+        //         //     '/chii/': {
+        //         //         target: 'http://127.0.0.1:8080/',
+        //         //         changeOrigin: true,
+        //         //         // rewrite: (path) => path.replace(/^\/chii/, ''),
+        //         //     },
+        //         //     // '^/chii/.*': {
+        //         //     //     target: 'http://127.0.0.1:8080/',
+        //         //     //     changeOrigin: true,
+        //         //     //     rewrite: (path) => path.replace(/^\/chii/, ''),
+        //         //     // },
+        //         // },
+        //     }
+        //     : {},
     },
     server: {
         headers: {
@@ -67,28 +65,29 @@ export default defineConfig({
             prefix: "/chii",
             // port: 4321,
         }),
-        VitePWA({
+        AstroPWA({
             // Source file: /src/sw.ts
             srcDir: "src/lib",
             filename: "sw.ts",
             
-            // Use our service worker instead of a generated one
+            // Use the custom service worker instead of a generated one
             strategies: "injectManifest",
-
-            // Manually register the service worker ourselves
-            injectRegister: false,
-            // Disable generating a PWA manifest
-            manifest: false,
             // @ts-expect-error: (2375)
             // Disable injecting workbox
             injectManifest: {
                 injectionPoint: undefined,
             },
+            // Disable generating a PWA manifest
+            manifest: false,
+            // Manually register the service worker
+            injectRegister: false,
 
 
             // Enable SW on development
             devOptions: {
                 enabled: true,
+                // Using a custom SW switches the default type to 'classic' so we 
+                // have to change it back.
                 type: "module",
             },
         }),
