@@ -1,0 +1,7 @@
+patchedDependencies:
+  "@jcubic/wayne": patches/@jcubic__wayne.patch
+  "chii@1.15.4": patches/chii@1.15.4.patch
+
+allowBuilds:
+  esbuild: true
+  sharp: true

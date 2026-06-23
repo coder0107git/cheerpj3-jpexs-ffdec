@@ -1,8 +1,8 @@
 {
   "name": "cheerpj-tests",
+  "private": true,
   "type": "module",
   "version": "0.0.0",
-  "private": true,
   "scripts": {
     "preinstall": "npx only-allow pnpm",
     "dev": "astro dev --host",
@@ -26,17 +26,9 @@
   "devDependencies": {
     "@types/path-browserify": "^1.0.3",
     "@types/range-parser": "^1.2.7",
-    "chii": "^1.15.4",
-    "tinyexec": "^1.0.1"
+    "chii": "1.15.4",
+    "tinyexec": "^1.0.1",
+    "vite": "^6.3.7"
   },
-  "pnpm": {
-    "patchedDependencies": {
-      "@jcubic/wayne": "patches/@jcubic__wayne.patch"
-    },
-    "onlyBuiltDependencies": [
-      "esbuild",
-      "sharp"
-    ]
-  },
-  "packageManager": "pnpm@10.22.0+sha512.bf049efe995b28f527fd2b41ae0474ce29186f7edcb3bf545087bd61fbbebb2bf75362d1307fda09c2d288e1e499787ac12d4fcb617a974718a6051f2eee741c"
+  "packageManager": "pnpm@11.6.0+sha512.9a36518224080c6fe5165afdcfe79bfa118c29be703f3f462b1e32efe1e98e47e8750b148e08286250aad4113cc7993ca413c4e2cd447752708c2ee5751bc95f"
 }
