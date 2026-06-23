@@ -1,11 +1,72 @@
 // @ts-check
 
 import { x } from "tinyexec";
-/**
- * @import { AstroIntegration } from "astro"
- * @typedef { ReturnType<typeof x> } ProcessResult
- */
+/** @import { AstroConfig, AstroIntegration } from "astro" */
+/** @import {ChiiIntegrationConfig} from "./integration-data-store.js" */
 import { setIntegrationData, updateIntegrationData } from "./integration-data-store.js";
+import { safePath } from "./common.js";
+
+
+/**
+ * @template {ChiiIntegrationConfig} Config
+ * @param {Config} params
+ * @returns {Config["UNSAFE_incorporateChiiIntoTheViteServerProcessAllowingTheCompromiseOfProcessIntegrity"] extends true 
+ *     ? Promise<AstroIntegration>
+ *     : AstroIntegration
+ * }
+ */
+export default function ChiiIntegration(params) {
+    params ??= /** @type {Config} */({});
+    params.port ??= 8080;
+    params.prefix ??= "/chii";
+    params.prefix = safePath(params.prefix);
+    params.UNSAFE_incorporateChiiIntoTheViteServerProcessAllowingTheCompromiseOfProcessIntegrity ??= false;
+
+    const { port, prefix } = params;
+    const UNSAFE_incorporateChiiIntoTheViteServerProcess = params.UNSAFE_incorporateChiiIntoTheViteServerProcessAllowingTheCompromiseOfProcessIntegrity;
+
+
+    let isDev = process.env.NODE_ENV === "development";
+    const notDev = (/** @type {boolean | undefined} */ extraIsDevCondition) => {
+        if(extraIsDevCondition) {
+            isDev = isDev && extraIsDevCondition;
+        }
+
+        return isDev !== true;
+    };
+
+    setIntegrationData({ port, prefix, disabled: true });
+    console.log(`[Chii Integration]: will use a subprocess: ${UNSAFE_incorporateChiiIntoTheViteServerProcess !== true}`)
+
+
+    if(UNSAFE_incorporateChiiIntoTheViteServerProcess !== true) {
+        // @ts-expect-error: (2322)
+        return {
+            name: "astro-chii",
+            hooks: integrateChiiWithASubprocess({ 
+                notDev,
+                serverInfo: { prefix, port },
+            }),
+        };
+    }
+
+
+    // @ts-expect-error: (2322)
+    return new Promise(async () => {
+        const { integrateChiiExposedServer } = await import("./chii-on-vite-server.js");
+
+        return {
+            name: "astro-chii",
+            hooks: integrateChiiExposedServer({ 
+                notDev,
+                serverInfo: { prefix },
+            }),
+        };
+    });
+}
+
+
+/** @typedef {ReturnType<typeof x>} ProcessResult */
 
 /**  @type {ProcessResult | null} */
 let chiiProcess = null;
@@ -18,100 +79,114 @@ const processToPromise = (process) => {
 };
 
 
-/** @typedef {import("./integration-data-store.js").ChiiIntegrationConfig} ChiiIntegrationConfig */
 /**
- * @param {ChiiIntegrationConfig} params
- * @returns {AstroIntegration}
+ * @param {Object} params
+ * @param {(extraIsDevCondition?: boolean) => boolean} params.notDev
+ * @param {{ prefix: string, port: number }} params.serverInfo
+ * 
+ * @returns {AstroIntegration["hooks"]}
  */
-export default function ChiiIntegration(params = {}) {
-    params.prefix ??= "/chii";
-    params.prefix = new URL(params.prefix, "file:///").pathname,
-    params.port ??= 8080;
+function integrateChiiWithASubprocess({ notDev, serverInfo }) {
+    const { prefix, port } = serverInfo;
 
-    const { port, prefix } = params;
-    const notDev = process.env.NODE_ENV !== "development";
-
-    setIntegrationData({ port, prefix, disabled: true });
+    /** @type {AstroConfig} */
+    let cachedAstroConfig;
 
     return {
-        name: "astro-chii",
-        hooks: {
-            "astro:config:setup": ({ logger, updateConfig }) => {
-                // logger.debug(`Using the following config: ${JSON.stringify(params, null, 2)}}`);
+        "astro:config:setup": ({ command, logger, config, updateConfig }) => {
+            if(notDev(command === "dev")) {
+                logger.info("Skipping Chii configuration for non-development environment");
+                return;
+            }
 
-                if(notDev) {
-                    logger.info("Skipping Chii configuration for non-development environment");
-                    return;
-                }
+            cachedAstroConfig = config;
+            const basePath = safePath(`${config.base}/${prefix}/`);
 
-                updateConfig({
-                    vite: {
-                        server: {
-                            proxy: {
-                                [`^${prefix}/target/.*`]: {
-                                    target: `ws://127.0.0.1:${port}/`,
-                                    ws: true,
+            updateConfig({
+                vite: {
+                    server: {
+                        proxy: {
+                            [`^${basePath}.*`]: {
+                                target: `ws://127.0.0.1:${port}/`,
+                                ws: true,
 
-                                    changeOrigin: true,
-                                    rewriteWsOrigin: true,
-                                    rewrite: (path) => path.replace(prefix, ''),
-                                },
-                                [prefix + "/"]: {
-                                    target: `http://127.0.0.1:${port}/`,
-                                    changeOrigin: true,
-                                },
+                                // changeOrigin: true,
+                                // rewriteWsOrigin: true,
+                                // rewrite: (path) => path.replace(prefix, ""),
                             },
-                        }
+                            [basePath]: {
+                                target: `http://127.0.0.1:${port}/`,
+                                // changeOrigin: true,
+                            },
+                        },
                     }
-                });
-            },
-            "astro:server:start": async ({ logger }) => {
-                const serverLogger = logger.fork(logger.label + "/server");
-
-                // If somehow a Chii server already exists, kill it
-                if(chiiProcess) {
-                    chiiProcess.kill();
                 }
-
-                if(notDev) {
-                    return;
-                }
-
-                chiiProcess = x("chii", ["start", "-p", `${port}`, "--base-path", prefix]);
-                
-                // Wait for Chii stdout (indicating Chii was started)
-                for await (const _ of chiiProcess) {
-                    if(chiiProcess.exitCode) {
-                        logger.error(`Unable to start Chii. Verify that the specified port (${port}) is available.`);
-
-                        chiiProcess = null;
-                        return;
-                    }
-
-                    // Chii didn't complain about the port, so Chii should be running. Other 
-                    // output from Chii can be ignored.
-                    break;
-                }
-
-                updateIntegrationData({ disabled: false });
-
-                serverLogger.info("Chii has successfully started");
-            },
-            "astro:server:done": async ({ logger }) => {
-                const serverLogger = logger.fork(logger.label + "/server");
-                
-                updateIntegrationData({ disabled: true });
-
-                if(chiiProcess) {
-                    chiiProcess.kill();
-                    await processToPromise(chiiProcess);
-                    chiiProcess = null;
-
-                    serverLogger.info("Chii has successfully shut down.");
-                }
+            });
+        },
+        "astro:config:done": ({ config }) => {
+            if(cachedAstroConfig.base !== config.base) {
+                throw new Error(
+                    "Mismatch between site base at config start and config end. Started " +
+                    `with '${cachedAstroConfig.base}' and ended with '${config.base}'. ` +
+                    "Ensure no plugins are modifying this path."
+                );
             }
         },
+        "astro:server:setup": async ({ logger }) => {
+            const serverLogger = logger.fork(logger.label + "/server");
+
+            // If somehow a Chii server already exists, kill it
+            if(chiiProcess) {
+                chiiProcess.kill();
+            }
+
+            if(notDev()) {
+                return;
+            }
+
+
+            const basePath = safePath(`${cachedAstroConfig.base}/${prefix}/`);
+
+            chiiProcess = x("chii", ["start",
+                "-p", `${port}`,
+                "--base-path", basePath,
+            ]);
+            await waitForChiiOutput(chiiProcess);
+
+            // If Chii failed to start
+            if(chiiProcess.exitCode) {
+                logger.error(`Unable to start Chii. Verify that the specified port (${port}) is available.`);
+
+                chiiProcess = null;
+                return;
+            }
+
+            updateIntegrationData({ disabled: false });
+            serverLogger.info("Chii has successfully started");
+        },
+        "astro:server:done": async ({ logger }) => {
+            const serverLogger = logger.fork(logger.label + "/server");
+            
+            updateIntegrationData({ disabled: true });
+
+            if(chiiProcess) {
+                chiiProcess.kill();
+                await processToPromise(chiiProcess);
+                chiiProcess = null;
+
+                serverLogger.info("Chii has successfully shut down.");
+            }
+        }
     };
 }
 
-
+/**
+ * Wait for Chii output (indicating Chii was started)
+ * 
+ * @param {Exclude<typeof chiiProcess, null>} chiiProcess 
+ */
+async function waitForChiiOutput(chiiProcess) {
+    for await (const _ of chiiProcess) {
+        return;
+    }
+}

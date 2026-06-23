@@ -61,10 +61,7 @@ export default defineConfig({
         },
     },
     integrations: [
-        Chii({
-            prefix: "/chii",
-            // port: 4321,
-        }),
+        Chii({ prefix: "/chii" }),
         AstroPWA({
             // Source file: /src/sw.ts
             srcDir: "src/lib",

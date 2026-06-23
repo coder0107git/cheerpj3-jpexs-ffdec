@@ -1,18 +1,24 @@
 // @ts-check
-import { version as chiiVersion } from "chii/package.json" assert { type: "json" };
+import { version as chiiVersion } from "chii/package.json" with { type: "json" };
 
 const __internalIntegrationDataKey = Symbol.for(`__chiiAstroIntegration [Chii ${chiiVersion}]`);
 
 /** 
  * @typedef {Object} ChiiIntegrationConfig
- * @prop {string} [prefix="/chii"] The path for Chii to listen on. This is **not** relative to the base. Defaults to `/chii`.
+ * @prop {string} [prefix="/chii"] The path for Chii to listen on. **This is relative to the site base.** Defaults to `/chii`.
  * @prop {number} [port=8080] Defaults to `8080`. An error is thrown if the specified port is unavailable.
+ * @prop {boolean} [UNSAFE_incorporateChiiIntoTheViteServerProcessAllowingTheCompromiseOfProcessIntegrity=false] **UNSAFE!** 
+ * Don't use unless you really know what you are doing. Integrating Chii in this manner compromises the integrity of the server 
+ * process. You really should reconsider using this option!
  */
 
 
 
 /**
- * @typedef {Required<ChiiIntegrationConfig> & { disabled: boolean }} IntegrationData
+ * @typedef {Required<Omit<
+ *     ChiiIntegrationConfig, 
+ *     "UNSAFE_incorporateChiiIntoTheViteServerProcessAllowingTheCompromiseOfProcessIntegrity"
+ * >> & { disabled: boolean }} IntegrationData
  * 
  * @typedef {typeof globalThis & {
  *     [__internalIntegrationDataKey]: IntegrationData

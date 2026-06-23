@@ -1,11 +1,17 @@
 ---
 import { getIntegrationData } from "./integration-data-store.js";
 
+
 const { prefix, disabled } = getIntegrationData();
-console.log(getIntegrationData());
+const scriptPath = URL.parse("./target.js", `file://${prefix}/`)?.pathname;
+
+if(!scriptPath) {
+    console.warn("[Astro Chii Integration: WARN] Chii was requested but ");
+}
+
 ---
 {
-    disabled 
+    disabled || !scriptPath
         ? "" 
-        : <script is:inline src={`${prefix}/target.js`}></script>
+        : <script is:inline src={scriptPath}></script>
 }

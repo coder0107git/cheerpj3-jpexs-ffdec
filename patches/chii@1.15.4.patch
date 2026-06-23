@@ -1,0 +1,25 @@
+diff --git a/server/tpl/index.hbs b/server/tpl/index.hbs
+index 9a25232338725bc8714d0b73d6800f9482f9c6fc..15e04024cea36ab5e6fc9e3d05b061c0e8933140 100644
+--- a/server/tpl/index.hbs
++++ b/server/tpl/index.hbs
+@@ -69,15 +69,16 @@
+   </div>
+   <div class="description hidden">
+     You can use this script to inject the chii target code into your web page.<br/>
+-    <a target="_blank" href="//{{domain}}{{basePath}}target.js">{{domain}}{{basePath}}target.js</a> <br/>
+-    Or just open the demo page <a target="_blank" href="//{{domain}}{{basePath}}test/demo.html">{{domain}}{{basePath}}test/demo.html</a> to play around with.<br/>
++    <a target="_blank" href="{{basePath}}target.js">{{basePath}}target.js</a> <br/>
++    Or just open the demo page <a target="_blank" href="{{basePath}}test/demo.html">{{basePath}}test/demo.html</a> to play around with.<br/>
+     <a target="_blank" href="https://chii.liriliri.io/">Chii v{{version}}</a>
+   </div>
+   <div class="help"></div>
+   <script>
+-    window.domain = '{{domain}}';
++    // window.domain = '{{domain}}';
++    window.domain = window.location.host;
+     window.basePath = '{{basePath}}';
+   </script>
+-  <script src="//{{domain}}{{basePath}}index.js"></script>
++  <script src="{{basePath}}index.js"></script>
+ </body>
+ </html>
