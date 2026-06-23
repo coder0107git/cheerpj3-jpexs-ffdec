@@ -143,10 +143,10 @@ declare global {
 // const isBrowser = import.meta.env.SSR === false;
 type AnyString = string & {};
 
-export async function getCheerpJLink(version: "latest" | AnyString = "4.2") {
+export async function getCheerpJLink(version: AnyString | "latest" = "4.3") {
     const url =
         version !== "latest"
-            ? `https://cjrtnc.leaningtech.com/${version}/cj3loader.js`
+            ? `https://cjrtnc.leaningtech.com/${version}/loader.js`
             : await fetch("https://cjrtnc.leaningtech.com/LATEST.txt")
                 .then(res => res.text());
 
