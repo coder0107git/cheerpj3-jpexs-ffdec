@@ -36,7 +36,7 @@ export default function ChiiIntegration(params) {
     };
 
     setIntegrationData({ port, prefix, disabled: true });
-    console.log(`[Chii Integration]: will use a subprocess: ${UNSAFE_incorporateChiiIntoTheViteServerProcess !== true}`)
+    // console.log(`[Chii Integration]: will use a subprocess: ${UNSAFE_incorporateChiiIntoTheViteServerProcess !== true}`)
 
 
     if(UNSAFE_incorporateChiiIntoTheViteServerProcess !== true) {
@@ -124,7 +124,9 @@ function integrateChiiWithASubprocess({ notDev, serverInfo }) {
             });
         },
         "astro:config:done": ({ config }) => {
-            if(cachedAstroConfig.base !== config.base) {
+            if(notDev()) return;
+
+            if(cachedAstroConfig?.base !== config?.base) {
                 throw new Error(
                     "Mismatch between site base at config start and config end. Started " +
                     `with '${cachedAstroConfig.base}' and ended with '${config.base}'. ` +
