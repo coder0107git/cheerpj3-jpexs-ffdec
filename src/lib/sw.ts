@@ -2,24 +2,33 @@
 /// <reference lib="ESNext" />
 /// <reference lib="webworker" />
 
-// Default type of `self` is `WorkerGlobalScope & typeof globalThis`
+// See <https://web.dev/articles/service-worker-lifecycle> for tips and
+// tricks when dealing with service workers.
+
+// Default type of `self` is `WorkerGlobalScope & typeof globalThis`. We
+// don't want `globalThis` because this isn't a regular window.
 // https://github.com/microsoft/TypeScript/issues/14877
 declare var self: ServiceWorkerGlobalScope;
 declare var clients: ServiceWorkerGlobalScope["clients"];
 
 
-// @ts-ignore the lack of types for Wayne
+// @ts-expect-error the lack of types for Wayne
 import { Wayne, FileSystem } from "@jcubic/wayne/index.js";
 import mime from "mime";
 import fsPath from "path-browserify";
 import parseRange from "range-parser";
+
 import { configure, fs, resolveMountConfig, /*InMemory*/ } from "@zenfs/core";
 import { Zip } from "@zenfs/archives";
 //import streamToBlob from "https://esm.sh/stream-to-blob";
-// @ts-ignore typescript not being able to find the types
 import { IndexedDB } from "@zenfs/dom";
 
-// import * as SWUtils from "./sw-utils.ts";
+import { 
+    CACHE_KEY, 
+    CACHE_KEY_PREFIX,
+    cache,
+} from "./sw-cache-utils.ts";
+
 
 self.addEventListener("install", () => {
     // Automatically start service worker
@@ -32,13 +41,16 @@ self.addEventListener("activate", (event) => {
 
     // Delete old caches
     event.waitUntil((async () => {
-        const cacheKey = getCacheKey();
-
-        const keyList = await caches.keys();
-        const cachesToDelete = keyList.filter((key) => key !== cacheKey);
-
+        const cacheList = await caches.keys();
         const deletionResults = await Promise.allSettled(
-            cachesToDelete.map(async (key) => {
+            cacheList.map(async (key) => {
+                if(
+                    key.startsWith(CACHE_KEY_PREFIX) !== true || 
+                    key !== CACHE_KEY
+                ) {
+                    return;
+                }
+                
                 await caches.delete(key);
             })
         );
@@ -51,18 +63,8 @@ self.addEventListener("activate", (event) => {
     })());
 });
 
-function getCacheKey() {
-    // return new Date().toDateString();
-    return new Date().getUTCMonth().toString();
-}
 
 const app = new Wayne();
-const getCache = () => caches.open(
-    //new Date().getUTCMonth() + ""
-    //new Date().toDateString()
-    getCacheKey()
-);
-
 
 // TODO: Investigate if this should be moved to `event.waitUntil`.
 const fsConfigured = configure({
@@ -71,7 +73,7 @@ const fsConfigured = configure({
     },
 }).then(() => {
     //fs.mkdirSync("/mnt");
-    fs.writeFileSync("/mnt/hello.txt", "Hello fom SW!", { flag: "w" });
+    fs.writeFileSync("/mnt/hello.txt", "Hello from SW!", { flag: "w" });
     app.use(async (req: any, res: any, next: any) => {
         const url = new URL(req.url);
         const extension = fsPath.extname(url.pathname);
@@ -141,7 +143,7 @@ const fsConfigured = configure({
             // End is not inclusive unlike `fs.createReadStream` so `+1` is needed
             end + 1
         );
-        // @ts-ignore
+        // @\ts-expect-error
         console.log(file.size, stream.size, end - start + 1);//await new Response(stream).text(), await streamToBlob(stream))
         console.log((await stream.text()).slice(0, 50));
 
@@ -199,11 +201,8 @@ app.post("/loadFs", async (req: any, res: any) => {
     if (!mountedFile) {
         await fsConfigured;
 
-
-        const cache = await getCache();
         const cacheResponse = await cache.match(url);
         let zipFile = cacheResponse;
-
 
         if(!cacheResponse) {
             if(!navigator.onLine) {

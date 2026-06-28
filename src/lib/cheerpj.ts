@@ -139,7 +139,7 @@ declare global {
 
 // import * as CheerpJ3 from "https://cjrtnc.leaningtech.com/3_20241017_546/cj3loader.js?url";
 
-// @ts-ignore
+// // @\ts-expect-error
 // const isBrowser = import.meta.env.SSR === false;
 type AnyString = string & {};
 

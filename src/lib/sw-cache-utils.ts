@@ -7,5 +7,15 @@
 declare var self: ServiceWorkerGlobalScope;
 declare var clients: ServiceWorkerGlobalScope["clients"];
 
-export {};
+
+export const CACHE_KEY_PREFIX = "CheerpJ-FFDEC";
+
+const date = new Date();
+const year = date.getUTCFullYear();
+const month = date.getUTCMonth();
+export const CACHE_KEY = `${CACHE_KEY_PREFIX}-${year}-${month}`;
+
+export const cache = await caches.open(CACHE_KEY);
+
+// export {};
 

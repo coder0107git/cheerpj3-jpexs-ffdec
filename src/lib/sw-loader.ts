@@ -41,8 +41,15 @@ if ("serviceWorker" in navigator) {
             console.error("[SW Loader] Registration failed with " + error);
         });
 
+    
+    if (navigator.serviceWorker.controller) {
         populateVersionPicker();
+    } else {
+        navigator.serviceWorker.ready
+            .then(() => populateVersionPicker());
+    }
 }
+
 
 type VersionInfo = [
     string, 

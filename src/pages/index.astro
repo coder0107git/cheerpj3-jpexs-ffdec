@@ -169,7 +169,7 @@ const cheerpjURL = await getCheerpJLink();
             const versionSelect = document.querySelector("select")!;
             let basePath = "ffdec_20-1-0/";
 
-            if(versionSelect.value !== "default") {
+            if(versionSelect.value !== "default" && navigator.serviceWorker.controller) {
                 basePath = await fetch("/loadFs", {
                     headers: {
                         "Accept": "application/json",
