@@ -51,6 +51,7 @@ if ("serviceWorker" in navigator) {
 }
 
 
+
 type VersionInfo = [
     string, 
     {
@@ -59,29 +60,53 @@ type VersionInfo = [
     }
 ];
 
-type ReleasesAPI = {
-    assets: [{ 
-        name: string; 
-        browser_download_url: string 
-    }];
-    name: string;
-    tag_name: string;
-};
-
 declare global {
     interface Window {
         versionInfoMap: Map<VersionInfo[0], VersionInfo[1]>
     }
 }
 
-async function populateVersionPicker() {
-    const releases: ReleasesAPI[] = await fetch(
-            "https://api.github.com/repos/jindrapetrik/jpexs-decompiler/releases?per_page=20"
-        )
-        .then((res) => res.json())
-        .catch(() => alert("Failed to fetch FFDEC versions"));
 
-    const versionInfo: VersionInfo[] = releases.map(release => {
+import type { ReleasesResponse } from "./github-releases-api.ts";
+
+const NULL = Symbol(`safePromise: null`);
+async function safePromise<P extends Promise<unknown>>(promise: P): Promise<[Awaited<P>, typeof NULL] | [typeof NULL, any]> {
+    try {
+        return [await promise, NULL];
+    } catch (e) {
+        return [NULL, e];
+    }
+}
+
+
+async function populateVersionPicker() {
+    const [response, responseError] = await safePromise(
+        fetch(
+            "https://api.github.com/repos/jindrapetrik/jpexs-decompiler/releases?per_page=20"
+        ) as Promise<ReleasesResponse>
+    );
+
+    if(responseError !== NULL || response === NULL || !response.ok) {
+        alert("Failed to fetch FFDEC versions");
+        console.error("Error:", responseError, "Response:", response);
+
+        return;
+    }
+
+
+    const [releasesJson, jsonError] = await safePromise(
+        (response as ReleasesResponse<200>).json()
+    );
+
+    if(jsonError !== NULL || releasesJson === NULL) {
+        alert("Failed to parse GitHub releases API response as JSON.")
+        console.error("Error:", jsonError, "JSON:", releasesJson);
+
+        return;
+    }
+
+
+    const versionInfo: VersionInfo[] = releasesJson.map(release => {
         const { name, tag_name } = release;
         const downloadUrl = release.assets
             // Get only the universal zip. Technically "lib" is in the java doc 
@@ -91,7 +116,7 @@ async function populateVersionPicker() {
             .at(0)!;
 
         return [
-            name,
+            name!,
             {
                 url: downloadUrl,
                 slug: tag_name,
@@ -102,13 +127,14 @@ async function populateVersionPicker() {
 
 
     const versionSelect = document.querySelector("select")!;
+    const versionSelectOptions: HTMLOptionElement[] = [];
 
-    versionSelect.append(...versionInfo.map(release => {
-        const [name] = release;
-        const elem = document.createElement("option");
+    for (const [name] of versionInfo) {
+        const option = document.createElement("option");
+        option.textContent = name;
 
-        elem.innerText = name;
+        versionSelectOptions.push(option);
+    }
 
-        return elem;
-    }));
+    versionSelect.append(...versionSelectOptions);
 }
