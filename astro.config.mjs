@@ -13,10 +13,10 @@ import AstroPWA from "@vite-pwa/astro";
  * @param {T} param 
  * @returns {T}
  */
-function echo(tag, param) {
-    console.log(`[${tag}]`, param);
-    return param;
-}
+// function echo(tag, param) {
+//     console.log(`[${tag}]`, param);
+//     return param;
+// }
 
 // https://astro.build/config
 export default defineConfig({
@@ -70,7 +70,8 @@ export default defineConfig({
             // Use the custom service worker instead of a generated one
             strategies: "injectManifest",
             // @ts-expect-error: (2375)
-            // Disable injecting workbox
+            // Disable injecting workbox manifest into the service worker. This 
+            // is different than the PWA manifest.
             injectManifest: {
                 injectionPoint: undefined,
             },

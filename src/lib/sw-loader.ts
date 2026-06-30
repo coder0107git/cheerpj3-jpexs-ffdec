@@ -1,42 +1,71 @@
-import serviceWorkerUrl from "../sw.ts?url";
+// import serviceWorkerUrl from "../sw.ts?url";
 // import serviceWorkerUrl from "./sw.ts?url";
 
-if ("serviceWorker" in navigator) {
+
+function joinUrlPaths(...paths: string[]) {
+    return paths.reduce((segment1, segment2) => {
+        if(segment1.endsWith("/")) {
+            return segment2.startsWith("/")
+                ? segment1 + segment2.slice(1)
+                : segment1 + segment2;
+        } else {
+            return segment2.startsWith("/")
+                ? segment1 + segment2
+                : segment1 + "/" + segment2;
+        }
+    });
+}
+
+async function registerServiceWorker() {
     const scope = location.pathname.replace(/\/[^\/]+$/, "/");
 
-    navigator
-        .serviceWorker
-        .register(serviceWorkerUrl, { scope, type: "module" })
-        .then((reg) => {
-            reg.addEventListener("updatefound", () => {
-                const installingWorker = reg.installing!;
+    const sw = await navigator.serviceWorker.register(
+        joinUrlPaths(
+            import.meta.env.BASE_URL,
+            import.meta.env.PROD 
+                ? "/sw.js"
+                : "/dev-sw.js?dev-sw",
+        ),
+        { 
+            scope, 
+            type: import.meta.env.DEV 
+                ? "module"
+                : "classic",
+        },
+    );
 
-                installingWorker.addEventListener("statechange", () => {
-                    const { state } = installingWorker;
+    sw.addEventListener("updatefound", () => {
+        const installingWorker = sw.installing!;
+        console.info("[SW Loader] A new service worker is being installed:", installingWorker);
 
-                    if(state === "installed") {
-                        // caches
-                        //     .keys()
-                        //     .then((keyList) =>
-                        //         Promise.all(
-                        //             keyList.map((key) => caches.delete(key)),
-                        //         ),
-                        //     )
-                        //     .then(() => {
-                        //         console.log("Deleted all caches");
-                        //     });
-                        
-                        console.info("[SW Loader] Service worker installed"); 
-                        // location.reload();
-                    }
-                });
+        installingWorker.addEventListener("statechange", () => {
+            const { state } = installingWorker;
 
-                console.info("[SW Loader] A new service worker is being installed:", installingWorker);
-            });
+            if(state === "installed") {
+                // caches
+                //     .keys()
+                //     .then((keyList) =>
+                //         Promise.all(
+                //             keyList.map((key) => caches.delete(key)),
+                //         ),
+                //     )
+                //     .then(() => {
+                //         console.log("Deleted all caches");
+                //     });
+                
+                console.info("[SW Loader] Service worker installed"); 
+                // location.reload();
+            }
+        });
+    });
 
-            // registration worked
-            console.info("[SW Loader] Registration succeeded. Scope is " + reg.scope);
-        }).catch((error) => {
+    console.info("[SW Loader] Registration succeeded. Scope is " + sw.scope);
+}
+
+
+if ("serviceWorker" in navigator) {
+    registerServiceWorker()
+        .catch((error) => {
             // registration failed
             console.error("[SW Loader] Registration failed with " + error);
         });
