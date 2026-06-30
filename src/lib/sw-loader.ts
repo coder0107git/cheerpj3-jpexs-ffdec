@@ -26,12 +26,7 @@ async function registerServiceWorker() {
                 ? "/sw.js"
                 : "/dev-sw.js?dev-sw",
         ),
-        { 
-            scope, 
-            type: import.meta.env.DEV 
-                ? "module"
-                : "classic",
-        },
+        { scope, type: "module" },
     );
 
     sw.addEventListener("updatefound", () => {
